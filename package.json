@@ -17,7 +17,8 @@
   "dependencies": {
     "cross-fetch": "^3.1.5",
     "dotenv": "^16.0.2",
-    "fastify": "^4.6.0"
+    "fastify": "^4.6.0",
+    "jsonwebtoken": "^8.5.1"
   },
   "prettier": {
     "tabWidth": 4,

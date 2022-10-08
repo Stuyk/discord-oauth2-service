@@ -3,6 +3,8 @@ import fetch from 'cross-fetch';
 import { Token } from './interfaces/token';
 import { DiscordUser } from './interfaces/discordUser';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -47,7 +49,7 @@ const RESPONSE_STRATEGY: string = process.env.RESPONSE_STRATEGY ? process.env.RE
 
 // remove from here once jwt is established and move jwt data to... jwt...
 let users: { [state: string]: DiscordUser } = {};
-let jwt;
+let sessionSecret: string;
 
 /**
  * Constructs a safe URL for authorization.
@@ -118,7 +120,10 @@ WebServer.get(ENDPOINTS.AUTH, async (request, reply) => {
         return { status: true, message: 'Authorization Complete!' };
     }
 
-    return 'some jwt shit';
+    // When the JWT token is returned.
+    // The developer should set the JWT token to a same site cookie.
+    // Set-Cookie: jwt=some_jwt; SameSite=Strict; Secure
+    return { status: true, jwt: jwt.sign(user, sessionSecret) };
 });
 
 WebServer.get(ENDPOINTS.URL, (request, reply) => {
@@ -162,10 +167,16 @@ WebServer.get(
     }
 );
 
-WebServer.listen({ port: PORT }, (err, address) => {
+WebServer.listen({ port: PORT }, async (err, address) => {
     if (err) {
         throw err;
     }
+
+    sessionSecret = await new Promise((resolve: Function) => {
+        crypto.randomBytes(48, (err, buff) => {
+            resolve(buff.toString('hex'));
+        });
+    });
 
     console.log(`Application Info`);
     console.log(`Redirect URL: ${DISCORD_REDIRECT}`);
