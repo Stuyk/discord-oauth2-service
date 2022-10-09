@@ -20,10 +20,12 @@ const WebServer = Fastify({
 });
 
 const ENDPOINTS = {
+    DEFAULT: '/',
     AUTH: '/auth',
     URL: '/url',
     URL_REDIRECT: '/url/redirect',
     USER: '/user/:state',
+    HEALTH: '/health',
 };
 
 if (typeof process.env.DISCORD_REDIRECT === 'undefined') {
@@ -59,6 +61,11 @@ let sessionSecret: string;
 function getURL(): string {
     return oAuthURL.replace('VAR_CLIENT_ID', CLIENT_ID).replace('VAR_REDIRECT_URI', encodeURI(DISCORD_REDIRECT));
 }
+
+WebServer.get(ENDPOINTS.DEFAULT, async (request, reply) => {
+    reply.type('application/json').code(200);
+    return { status: true };
+});
 
 WebServer.get(ENDPOINTS.AUTH, async (request, reply) => {
     const { code, state }: { code?: string; state?: string } = request.query;
@@ -167,7 +174,12 @@ WebServer.get(
     }
 );
 
-WebServer.listen({ port: PORT }, async (err, address) => {
+WebServer.get(ENDPOINTS.HEALTH, (request, reply) => {
+    reply.type('application/json').code(200);
+    return true;
+});
+
+WebServer.listen({ host: '0.0.0.0', port: PORT }, async (err, address) => {
     if (err) {
         throw err;
     }
@@ -178,11 +190,8 @@ WebServer.listen({ port: PORT }, async (err, address) => {
         });
     });
 
-    console.log(`Application Info`);
-    console.log(`Redirect URL: ${DISCORD_REDIRECT}`);
-    console.log(`Response Strategy: ${RESPONSE_STRATEGY}`);
-    if (RESPONSE_STRATEGY === 'json') {
-        console.log(`Users who authenticate may be obtained from the following url path:`);
-        console.log(`your-app-ip-or-address/user/id-passed-as-state`);
-    }
+    console.log(`Endpoints Created:`);
+    Object.keys(ENDPOINTS).forEach((key) => {
+        console.log(key);
+    });
 });
